@@ -39,7 +39,8 @@ class MetricsSpec extends FunSuite with Matchers with VeryPatientScalaFutures wi
     MockService.data shouldNot be('empty)
     val histogram = TestReporter.get(this.getClass.getName).testHistogram("service.OK.serviceName.mockService.histogram")
     histogram.getCount shouldBe 1
-
+    val legacyHistogram = TestReporter.get(this.getClass.getName).testHistogram("serviceTimes.mockService.OK")
+    legacyHistogram.getCount shouldBe 1
   }
 
   test("measure errors") {
@@ -59,14 +60,19 @@ class MetricsSpec extends FunSuite with Matchers with VeryPatientScalaFutures wi
     eventually {
       val reporter = TestReporter.get(this.getClass.getName)
 
+      // same name for new and legacy modes
       val totalGauges = reporter.testGauges("error.instantRate.instantRate")
       totalGauges.exists(_.getValue.asInstanceOf[Double] > 0) shouldBe true
 
       val nodeGauges = reporter.testGauges("error.instantRateByNode.nodeId.proc2.instantRate")
       nodeGauges.exists(_.getValue.asInstanceOf[Double] > 0) shouldBe true
+      val legacyNodeGauges = reporter.testGauges("error.proc2.instantRateByNode.instantRate")
+      legacyNodeGauges.exists(_.getValue.asInstanceOf[Double] > 0) shouldBe true
 
       val nodeCounts = reporter.testCounters("error.instantRateByNode.nodeId.proc2")
       nodeCounts.exists(_.getCount > 0) shouldBe true
+      val legacyNodeCounts = reporter.testCounters("error.proc2.instantRateByNode")
+      legacyNodeCounts.exists(_.getCount > 0) shouldBe true
     }
 
   }
@@ -104,6 +110,13 @@ class MetricsSpec extends FunSuite with Matchers with VeryPatientScalaFutures wi
       counter("nodeId.proc2.nodeCount") shouldBe 1L
       counter("nodeId.out.nodeCount") shouldBe 1L
       counter("nodeId.out2.nodeCount") shouldBe 1L
+      // legacy metrics
+      counter("nodeCount.source1") shouldBe 2L
+      counter("nodeCount.filter1") shouldBe 2L
+      counter("nodeCount.split1") shouldBe 1L
+      counter("nodeCount.proc2") shouldBe 1L
+      counter("nodeCount.out") shouldBe 1L
+      counter("nodeCount.out2") shouldBe 1L
     }
   }
 
