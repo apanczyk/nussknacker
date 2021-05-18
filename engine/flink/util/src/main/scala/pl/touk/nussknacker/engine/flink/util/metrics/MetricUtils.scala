@@ -74,11 +74,12 @@ class MetricUtils(runtimeContext: RuntimeContext) {
 
   private def groupsWithName(nameParts: NonEmptyList[String], tags: Map[String, String]): (MetricGroup, String) = {
     val namespaceTags = extractTags(NkGlobalParameters.readFromContext(runtimeContext.getExecutionConfig))
-    tagMode(nameParts, tags ++ namespaceTags)
+    tagMode(nameParts, tags ++ namespaceTags, false)
   }
 
-  private def tagMode(nameParts: NonEmptyList[String], tags: Map[String, String]): (MetricGroup, String) = {
-    val lastName = nameParts.last
+  private def tagMode(nameParts: NonEmptyList[String], tags: Map[String, String], legacyMode: Boolean): (MetricGroup, String) = {
+    val lastName = if (legacyMode) s"${nameParts.last}_nk_legacy" else s"${nameParts.last}_nk_new"
+
     //all but last
     val metricNameParts = nameParts.init
     val groupWithNameParts = metricNameParts.foldLeft(runtimeContext.getMetricGroup)(_.addGroup(_))
@@ -86,12 +87,13 @@ class MetricUtils(runtimeContext: RuntimeContext) {
     val finalGroup = tags.toList.sortBy(_._1).foldLeft(groupWithNameParts) {
       case (group, (tag, tagValue)) => group.addGroup(tag, tagValue)
     }
+
     (finalGroup, lastName)
   }
 
   private def groupsWithNameForLegacyMode(nameParts: NonEmptyList[String], tags: Map[String, String]): (MetricGroup, String) = {
     def insertTag(tagId: String)(nameParts: NonEmptyList[String]): (MetricGroup, String) =
-      tagMode(NonEmptyList(nameParts.head, tags(tagId)::nameParts.tail), Map.empty)
+      tagMode(NonEmptyList(nameParts.head, tags(tagId)::nameParts.tail), Map.empty, true)
 
     val insertNodeId = insertTag("nodeId") _
 
@@ -110,17 +112,17 @@ class MetricUtils(runtimeContext: RuntimeContext) {
       case l@NonEmptyList("nodeCount", _) =>insertNodeId(l)
 
       //GenericTimeMeasuringService
-      case l@NonEmptyList("service", name :: "instantRate" :: Nil) => tagMode(NonEmptyList("serviceInstant",  tags("serviceName") :: name :: Nil), Map.empty)
-      case l@NonEmptyList("service", name :: "histogram" :: Nil) => tagMode(NonEmptyList("serviceTimes", tags("serviceName") :: name :: Nil), Map.empty)
+      case l@NonEmptyList("service", name :: "instantRate" :: Nil) => tagMode(NonEmptyList("serviceInstant",  tags("serviceName") :: name :: Nil), Map.empty, true)
+      case l@NonEmptyList("service", name :: "histogram" :: Nil) => tagMode(NonEmptyList("serviceTimes", tags("serviceName") :: name :: Nil), Map.empty, true)
 
-      case l@NonEmptyList("error", "instantRate" :: "instantRate" :: Nil) => tagMode(l, Map.empty)
+      case l@NonEmptyList("error", "instantRate" :: "instantRate" :: Nil) => tagMode(l, Map.empty, true)
       case l@NonEmptyList("error", "instantRateByNode" :: "instantRate" :: Nil) => insertNodeId(l)
 
-      case l@NonEmptyList("error", "instantRate" :: "count" :: Nil) => tagMode(l, Map.empty)
+      case l@NonEmptyList("error", "instantRate" :: "count" :: Nil) => tagMode(l, Map.empty, true)
       case l@NonEmptyList("error", "instantRateByNode" :: "count" :: Nil) => insertNodeId(l)
         
       //we resort to default mode...
-      case _ => tagMode(nameParts, tags)
+      case _ => tagMode(nameParts, tags, true)
     }
   }
 

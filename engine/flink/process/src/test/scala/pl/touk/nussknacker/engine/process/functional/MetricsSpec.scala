@@ -37,9 +37,10 @@ class MetricsSpec extends FunSuite with Matchers with VeryPatientScalaFutures wi
     processInvoker.invokeWithSampleData(process, data)
 
     MockService.data shouldNot be('empty)
-    val histogram = TestReporter.get(this.getClass.getName).testHistogram("service.OK.serviceName.mockService.histogram")
+    val histogram = TestReporter.get(this.getClass.getName).testHistogram("service.OK.serviceName.mockService.histogram_nk_new")
     histogram.getCount shouldBe 1
-    val legacyHistogram = TestReporter.get(this.getClass.getName).testHistogram("serviceTimes.mockService.OK")
+
+    val legacyHistogram = TestReporter.get(this.getClass.getName).testHistogram("serviceTimes.mockService.OK_nk_legacy")
     legacyHistogram.getCount shouldBe 1
   }
 
@@ -60,21 +61,24 @@ class MetricsSpec extends FunSuite with Matchers with VeryPatientScalaFutures wi
     eventually {
       val reporter = TestReporter.get(this.getClass.getName)
 
-      // same name for new and legacy modes
-      val totalGauges = reporter.testGauges("error.instantRate.instantRate")
+      val totalGauges = reporter.testGauges("error.instantRate.instantRate_nk_new")
       totalGauges.exists(_.getValue.asInstanceOf[Double] > 0) shouldBe true
 
-      val nodeGauges = reporter.testGauges("error.instantRateByNode.nodeId.proc2.instantRate")
+      val legacyTotalGauges = reporter.testGauges("error.instantRate.instantRate_nk_legacy")
+      legacyTotalGauges.exists(_.getValue.asInstanceOf[Double] > 0) shouldBe true
+
+      val nodeGauges = reporter.testGauges("error.instantRateByNode.nodeId.proc2.instantRate_nk_new")
       nodeGauges.exists(_.getValue.asInstanceOf[Double] > 0) shouldBe true
-      val legacyNodeGauges = reporter.testGauges("error.proc2.instantRateByNode.instantRate")
+
+      val legacyNodeGauges = reporter.testGauges("error.proc2.instantRateByNode.instantRate_nk_legacy")
       legacyNodeGauges.exists(_.getValue.asInstanceOf[Double] > 0) shouldBe true
 
-      val nodeCounts = reporter.testCounters("error.instantRateByNode.nodeId.proc2")
+      val nodeCounts = reporter.testCounters("error.instantRateByNode.nodeId.proc2.count_nk_new")
       nodeCounts.exists(_.getCount > 0) shouldBe true
-      val legacyNodeCounts = reporter.testCounters("error.proc2.instantRateByNode")
+
+      val legacyNodeCounts = reporter.testCounters("error.proc2.instantRateByNode.count_nk_legacy")
       legacyNodeCounts.exists(_.getCount > 0) shouldBe true
     }
-
   }
 
   test("measure node counts") {
@@ -104,19 +108,19 @@ class MetricsSpec extends FunSuite with Matchers with VeryPatientScalaFutures wi
       TestReporter.get(this.getClass.getName).testCounters(name).map(_.getCount).find(_ > 0).getOrElse(0)
 
     eventually {
-      counter("nodeId.source1.nodeCount") shouldBe 2L
-      counter("nodeId.filter1.nodeCount") shouldBe 2L
-      counter("nodeId.split1.nodeCount") shouldBe 1L
-      counter("nodeId.proc2.nodeCount") shouldBe 1L
-      counter("nodeId.out.nodeCount") shouldBe 1L
-      counter("nodeId.out2.nodeCount") shouldBe 1L
+      counter("nodeId.source1.nodeCount_nk_new") shouldBe 2L
+      counter("nodeId.filter1.nodeCount_nk_new") shouldBe 2L
+      counter("nodeId.split1.nodeCount_nk_new") shouldBe 1L
+      counter("nodeId.proc2.nodeCount_nk_new") shouldBe 1L
+      counter("nodeId.out.nodeCount_nk_new") shouldBe 1L
+      counter("nodeId.out2.nodeCount_nk_new") shouldBe 1L
       // legacy metrics
-      counter("nodeCount.source1") shouldBe 2L
-      counter("nodeCount.filter1") shouldBe 2L
-      counter("nodeCount.split1") shouldBe 1L
-      counter("nodeCount.proc2") shouldBe 1L
-      counter("nodeCount.out") shouldBe 1L
-      counter("nodeCount.out2") shouldBe 1L
+      counter("nodeCount.source1_nk_legacy") shouldBe 2L
+      counter("nodeCount.filter1_nk_legacy") shouldBe 2L
+      counter("nodeCount.split1_nk_legacy") shouldBe 1L
+      counter("nodeCount.proc2_nk_legacy") shouldBe 1L
+      counter("nodeCount.out_nk_legacy") shouldBe 1L
+      counter("nodeCount.out2_nk_legacy") shouldBe 1L
     }
   }
 

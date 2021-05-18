@@ -64,7 +64,10 @@ class TestReporter extends AbstractReporter {
 
   def testGauges(containing: String): Iterable[Gauge[_]] = gauges.asScala.filter(_._2.contains(containing)).keys
 
-  def testCounters(containing: String): Iterable[Counter] = counters.asScala.filter(_._2.contains(containing)).keys
+  def testCounters(containing: String): Iterable[Counter] = {
+    val fcounters =  counters.asScala.filter(_._2.contains(containing))
+    fcounters.keys
+  }
 
   def names: Iterable[String] = counters.values().asScala
 
