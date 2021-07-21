@@ -85,7 +85,8 @@ object ProcessDefinitionExtractor {
         expressionConfig.dictionaries.mapValuesNow(_.value),
         expressionConfig.hideMetaVariable,
         expressionConfig.strictMethodsChecking,
-        expressionConfig.staticMethodInvocationsChecking
+        expressionConfig.staticMethodInvocationsChecking,
+        expressionConfig.disableMethodExecutionForUnknown
       ), settings)
   }
 
@@ -151,7 +152,8 @@ object ProcessDefinitionExtractor {
       definition.expressionConfig.dictionaries,
       definition.expressionConfig.hideMetaVariable,
       definition.expressionConfig.strictMethodsChecking,
-      definition.expressionConfig.staticMethodInvocationsChecking
+      definition.expressionConfig.staticMethodInvocationsChecking,
+      definition.expressionConfig.disableMethodExecutionForUnknown
     )
     ProcessDefinition(
       definition.services.mapValuesNow(_.objectDefinition),
@@ -167,6 +169,7 @@ object ProcessDefinitionExtractor {
 
   case class ExpressionDefinition[+T <: ObjectMetadata](globalVariables: Map[String, T], globalImports: List[String], additionalClasses: List[Class[_]],
                                                         languages: LanguageConfiguration, optimizeCompilation: Boolean, strictTypeChecking: Boolean,
-                                                        dictionaries: Map[String, DictDefinition], hideMetaVariable: Boolean, strictMethodsChecking: Boolean, staticMethodInvocationsChecking: Boolean)
+                                                        dictionaries: Map[String, DictDefinition], hideMetaVariable: Boolean, strictMethodsChecking: Boolean,
+                                                        staticMethodInvocationsChecking: Boolean, disableMethodExecutionForUnknown: Boolean)
 
 }
