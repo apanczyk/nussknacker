@@ -28,4 +28,9 @@ jobs:
           java-version: "openjdk@1.11"
       - name: Run benchmarks
         shell: bash
-        run: ./ciRunSbt.sh benchmarks/jmh:run -i 1 -wi 1 -f1 -t2 .SampleSpelBenchmark -rf csv
+        run: ./ciRunSbt.sh benchmarks/jmh:run -i 1 -wi 1 -f1 -t1 .SampleSpelBenchmarkForTest -rf csv
+      - name: Archive production artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: jmh-result.csv
+          path: engine/benchmarks/*.csv
