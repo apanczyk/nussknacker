@@ -10,24 +10,11 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     steps:
-      - name: Cancel previous runs
-        uses: styfle/cancel-workflow-action@0.8.0
-        with:
-          access_token: ${{ secrets.GITHUB_TOKEN }}
-      - uses: actions/checkout@v2
-      - name: Cache ivy packages
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.ivy2/cache
-            ~/.sbt
-          key: ${{ runner.os }}-ivy2-${{ hashFiles('**/*.sbt') }}
-          restore-keys: ${{ runner.os }}-sbt
+      - name: Setup scala
       - uses: olafurpg/setup-scala@v10
         with:
           java-version: "openjdk@1.11"
       - name: Run benchmarks
-        shell: bash
         run: sbt benchmarks/jmh:run -i 1 -wi 1 -f1 -t1 .SampleSpelBenchmark -rf csv
       - name: Archive production artifacts
         uses: actions/upload-artifact@v2
